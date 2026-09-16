@@ -11,15 +11,31 @@ import { useSelector } from "react-redux";
 function JobStats() {
   const jobs = useSelector((state) => state.jobs.jobs);
 
-  const total = jobs.length;
+  // ============================================================
+  // ALWAYS ENSURE JOBS IS AN ARRAY
+  // ============================================================
 
-  const pending = jobs.filter((job) => job.status === "pending").length;
+  const jobsList = Array.isArray(jobs) ? jobs : [];
 
-  const running = jobs.filter((job) => job.status === "running").length;
+  // ============================================================
+  // STATISTICS
+  // ============================================================
 
-  const completed = jobs.filter((job) => job.status === "completed").length;
+  const total = jobsList.length;
 
-  const failed = jobs.filter((job) => job.status === "failed").length;
+  const pending = jobsList.filter((job) => job?.status === "pending").length;
+
+  const running = jobsList.filter((job) => job?.status === "running").length;
+
+  const completed = jobsList.filter(
+    (job) => job?.status === "completed",
+  ).length;
+
+  const failed = jobsList.filter((job) => job?.status === "failed").length;
+
+  // ============================================================
+  // STATS DATA
+  // ============================================================
 
   const stats = [
     {
@@ -54,6 +70,10 @@ function JobStats() {
     },
   ];
 
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {stats.map((stat) => {
@@ -63,12 +83,18 @@ function JobStats() {
           <div
             key={stat.title}
             className="
-              rounded-xl border border-slate-200
-              bg-white p-5 shadow-sm
-              transition hover:shadow-md
+              rounded-xl
+              border border-slate-200
+              bg-white
+              p-5
+              shadow-sm
+              transition
+              hover:shadow-md
             "
           >
             <div className="flex items-center justify-between">
+              {/* Text */}
+
               <div>
                 <p className="text-sm font-medium text-slate-500">
                   {stat.title}
@@ -79,10 +105,17 @@ function JobStats() {
                 </h3>
               </div>
 
+              {/* Icon */}
+
               <div
                 className={`
-                  flex h-11 w-11 items-center justify-center
-                  rounded-lg ${stat.iconClass}
+                  flex
+                  h-11
+                  w-11
+                  items-center
+                  justify-center
+                  rounded-lg
+                  ${stat.iconClass}
                 `}
               >
                 <Icon size={21} />

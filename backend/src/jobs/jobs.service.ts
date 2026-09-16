@@ -132,9 +132,7 @@ export class JobsService {
         throw new NotFoundException('Job not found');
       }
 
-      return {
-        message: 'Job deleted successfully',
-      };
+      return id;
     } catch (error) {
       // Preserve intentional 404
       if (error instanceof NotFoundException) {

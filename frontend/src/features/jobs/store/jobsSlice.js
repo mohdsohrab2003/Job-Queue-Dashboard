@@ -13,10 +13,17 @@ import {
 
 export const fetchJobs = createAsyncThunk(
   "jobs/fetchJobs",
+
   async (_, thunkAPI) => {
     try {
-      return await getJobs();
+      const response = await getJobs();
+
+      console.log("GET /jobs RESPONSE:", response);
+
+      return response;
     } catch (error) {
+      console.error("FETCH JOBS ERROR:", error);
+
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Unable to fetch jobs",
       );
@@ -30,6 +37,7 @@ export const fetchJobs = createAsyncThunk(
 
 export const createJobAsync = createAsyncThunk(
   "jobs/createJob",
+
   async (jobData, thunkAPI) => {
     try {
       const job = await createJob(jobData);
@@ -38,6 +46,8 @@ export const createJobAsync = createAsyncThunk(
 
       return job;
     } catch (error) {
+      console.error("CREATE JOB ERROR:", error);
+
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Unable to create job",
       );
@@ -51,10 +61,17 @@ export const createJobAsync = createAsyncThunk(
 
 export const updateJobStatusAsync = createAsyncThunk(
   "jobs/updateStatus",
+
   async ({ id, status }, thunkAPI) => {
     try {
-      return await updateJobStatus(id, status);
+      const job = await updateJobStatus(id, status);
+
+      console.log("UPDATE JOB RESPONSE:", job);
+
+      return job;
     } catch (error) {
+      console.error("UPDATE STATUS ERROR:", error);
+
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Unable to update job status",
       );
@@ -68,12 +85,15 @@ export const updateJobStatusAsync = createAsyncThunk(
 
 export const deleteJobAsync = createAsyncThunk(
   "jobs/deleteJob",
+
   async (id, thunkAPI) => {
     try {
       await deleteJob(id);
 
       return id;
     } catch (error) {
+      console.error("DELETE JOB ERROR:", error);
+
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Unable to delete job",
       );
@@ -89,8 +109,11 @@ const initialState = {
   jobs: [],
 
   loading: false,
+
   creating: false,
+
   updating: false,
+
   deleting: false,
 
   error: null,
@@ -115,7 +138,7 @@ const jobsSlice = createSlice({
     builder
 
       // ======================================================
-      // FETCH JOBS
+      // FETCH JOBS - PENDING
       // ======================================================
 
       .addCase(fetchJobs.pending, (state) => {
@@ -123,18 +146,36 @@ const jobsSlice = createSlice({
         state.error = null;
       })
 
+      // ======================================================
+      // FETCH JOBS - SUCCESS
+      // ======================================================
+
       .addCase(fetchJobs.fulfilled, (state, action) => {
         state.loading = false;
-        state.jobs = action.payload;
-      })
 
-      .addCase(fetchJobs.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        if (Array.isArray(action.payload)) {
+          state.jobs = action.payload;
+        } else {
+          console.error("Expected jobs array but received:", action.payload);
+
+          state.jobs = [];
+        }
       })
 
       // ======================================================
-      // CREATE JOB
+      // FETCH JOBS - ERROR
+      // ======================================================
+
+      .addCase(fetchJobs.rejected, (state, action) => {
+        state.loading = false;
+
+        state.error = action.payload || "Unable to fetch jobs";
+
+        state.jobs = [];
+      })
+
+      // ======================================================
+      // CREATE JOB - PENDING
       // ======================================================
 
       .addCase(createJobAsync.pending, (state) => {
@@ -142,19 +183,36 @@ const jobsSlice = createSlice({
         state.error = null;
       })
 
+      // ======================================================
+      // CREATE JOB - SUCCESS
+      // ======================================================
+
       .addCase(createJobAsync.fulfilled, (state, action) => {
         state.creating = false;
 
-        state.jobs.unshift(action.payload);
-      })
-
-      .addCase(createJobAsync.rejected, (state, action) => {
-        state.creating = false;
-        state.error = action.payload;
+        if (
+          action.payload &&
+          typeof action.payload === "object" &&
+          !Array.isArray(action.payload)
+        ) {
+          state.jobs.unshift(action.payload);
+        } else {
+          console.error("Invalid create job response:", action.payload);
+        }
       })
 
       // ======================================================
-      // UPDATE STATUS
+      // CREATE JOB - ERROR
+      // ======================================================
+
+      .addCase(createJobAsync.rejected, (state, action) => {
+        state.creating = false;
+
+        state.error = action.payload || "Unable to create job";
+      })
+
+      // ======================================================
+      // UPDATE STATUS - PENDING
       // ======================================================
 
       .addCase(updateJobStatusAsync.pending, (state) => {
@@ -162,25 +220,40 @@ const jobsSlice = createSlice({
         state.error = null;
       })
 
+      // ======================================================
+      // UPDATE STATUS - SUCCESS
+      // ======================================================
+
       .addCase(updateJobStatusAsync.fulfilled, (state, action) => {
         state.updating = false;
 
         const updatedJob = action.payload;
 
-        const index = state.jobs.findIndex((job) => job.id === updatedJob.id);
+        if (!updatedJob || typeof updatedJob !== "object") {
+          console.error("Invalid update job response:", updatedJob);
+
+          return;
+        }
+
+        const index = state.jobs.findIndex((job) => job?.id === updatedJob.id);
 
         if (index !== -1) {
           state.jobs[index] = updatedJob;
         }
       })
 
+      // ======================================================
+      // UPDATE STATUS - ERROR
+      // ======================================================
+
       .addCase(updateJobStatusAsync.rejected, (state, action) => {
         state.updating = false;
-        state.error = action.payload;
+
+        state.error = action.payload || "Unable to update job status";
       })
 
       // ======================================================
-      // DELETE JOB
+      // DELETE JOB - PENDING
       // ======================================================
 
       .addCase(deleteJobAsync.pending, (state) => {
@@ -188,15 +261,29 @@ const jobsSlice = createSlice({
         state.error = null;
       })
 
+      // ======================================================
+      // DELETE JOB - SUCCESS
+      // ======================================================
+
       .addCase(deleteJobAsync.fulfilled, (state, action) => {
         state.deleting = false;
 
-        state.jobs = state.jobs.filter((job) => job.id !== action.payload);
+        if (!Array.isArray(state.jobs)) {
+          state.jobs = [];
+          return;
+        }
+
+        state.jobs = state.jobs.filter((job) => job?.id !== action.payload);
       })
+
+      // ======================================================
+      // DELETE JOB - ERROR
+      // ======================================================
 
       .addCase(deleteJobAsync.rejected, (state, action) => {
         state.deleting = false;
-        state.error = action.payload;
+
+        state.error = action.payload || "Unable to delete job";
       });
   },
 });

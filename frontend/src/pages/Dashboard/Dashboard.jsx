@@ -16,6 +16,10 @@ function Dashboard() {
 
   const { jobs, loading, error } = useSelector((state) => state.jobs);
 
+  // ============================================================
+  // ALWAYS ENSURE JOBS IS AN ARRAY
+  // ============================================================
+
   const jobsList = Array.isArray(jobs) ? jobs : [];
 
   const [search, setSearch] = useState("");
@@ -37,7 +41,7 @@ function Dashboard() {
     const searchText = search.toLowerCase().trim();
 
     return jobsList.filter((job) => {
-      if (!job) {
+      if (!job || typeof job !== "object") {
         return false;
       }
 
@@ -63,7 +67,7 @@ function Dashboard() {
     <DashboardLayout>
       <main className="p-4 sm:p-6 lg:p-8">
         {/* ======================================================
-            WELCOME SECTION
+            WELCOME
         ====================================================== */}
 
         <div className="mb-8">
@@ -82,7 +86,7 @@ function Dashboard() {
 
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {Array.isArray(error) ? error.join(", ") : error}
+            {Array.isArray(error) ? error.join(", ") : String(error)}
           </div>
         )}
 
@@ -102,13 +106,14 @@ function Dashboard() {
           ==================================================== */}
 
           <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:col-span-3">
-            {/* -----------------------------------------------
+            {/* ==================================================
                 TABLE HEADER
-            ------------------------------------------------ */}
+            ================================================== */}
 
             <div className="border-b border-slate-200 p-5 sm:p-6">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 {/* Title */}
+
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">
                     Recent Jobs
@@ -120,6 +125,7 @@ function Dashboard() {
                 </div>
 
                 {/* Filters */}
+
                 <div className="w-full lg:max-w-md">
                   <JobFilters
                     search={search}
@@ -131,9 +137,9 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* -----------------------------------------------
+            {/* ==================================================
                 JOB TABLE
-            ------------------------------------------------ */}
+            ================================================== */}
 
             {loading ? (
               <div className="flex min-h-60 items-center justify-center">

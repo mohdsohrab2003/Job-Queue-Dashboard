@@ -11,20 +11,32 @@ import { fetchJobs } from "../../features/jobs/store/jobsSlice";
 function AllJobs() {
   const dispatch = useDispatch();
 
-  const { jobs = [], loading, error } = useSelector((state) => state.jobs);
+  const { jobs, loading, error } = useSelector((state) => state.jobs);
+
+  const jobsList = Array.isArray(jobs) ? jobs : [];
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+
+  // ============================================================
+  // FETCH JOBS
+  // ============================================================
 
   useEffect(() => {
     dispatch(fetchJobs());
   }, [dispatch]);
 
+  // ============================================================
+  // FILTER JOBS
+  // ============================================================
+
   const filteredJobs = useMemo(() => {
     const searchText = search.toLowerCase().trim();
 
-    return jobs.filter((job) => {
-      if (!job) return false;
+    return jobsList.filter((job) => {
+      if (!job || typeof job !== "object") {
+        return false;
+      }
 
       const title = String(job.title ?? "");
       const type = String(job.type ?? "");
@@ -38,7 +50,7 @@ function AllJobs() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [jobs, search, status]);
+  }, [jobsList, search, status]);
 
   return (
     <DashboardLayout>
