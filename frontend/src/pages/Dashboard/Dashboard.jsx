@@ -14,7 +14,9 @@ import { fetchJobs } from "../../features/jobs/store/jobsSlice";
 function Dashboard() {
   const dispatch = useDispatch();
 
-  const { jobs = [], loading, error } = useSelector((state) => state.jobs);
+  const { jobs, loading, error } = useSelector((state) => state.jobs);
+
+  const jobsList = Array.isArray(jobs) ? jobs : [];
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -34,7 +36,7 @@ function Dashboard() {
   const filteredJobs = useMemo(() => {
     const searchText = search.toLowerCase().trim();
 
-    return jobs.filter((job) => {
+    return jobsList.filter((job) => {
       if (!job) {
         return false;
       }
@@ -51,7 +53,7 @@ function Dashboard() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [jobs, search, status]);
+  }, [jobsList, search, status]);
 
   // ============================================================
   // UI
