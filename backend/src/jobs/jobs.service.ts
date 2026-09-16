@@ -25,10 +25,7 @@ export class JobsService {
         title: createJobDto.title,
         type: createJobDto.type,
       });
-      return {
-        job: await this.jobRepository.save(job),
-        message: 'Job Create Sucessfully',
-      };
+      return await this.jobRepository.save(job);
     } catch (error) {
       console.error('Create job error:', error);
 
